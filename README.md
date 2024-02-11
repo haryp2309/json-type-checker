@@ -1,6 +1,6 @@
 # JSON Type Checker
 
-This project aims to solve IDE support for typed JSON files. By defining a `[name].typedef.json`-file, `[name].json' can be type checked.
+This project aims to solve IDE support for typed JSON files. By defining a `[name].typedef.json`-file, `[name].json` can be type checked.
 
 ## Usage
 
