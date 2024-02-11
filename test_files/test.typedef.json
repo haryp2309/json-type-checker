@@ -1,0 +1,25 @@
+{
+    "type": "object",
+    "properties": {
+      "jobs": {
+        "type": "list",
+        "children": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "command": {
+              "type": "string"
+            },
+            "tag": {
+              "type": "string"
+            },
+            "run_id": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    }
+  }
