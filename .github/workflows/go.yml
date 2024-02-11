@@ -51,4 +51,5 @@ jobs:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./${{ env.BINARY_NAME }}
         asset_name: ${{ env.BINARY_NAME }}
+        asset_content_type: application/binary
     
