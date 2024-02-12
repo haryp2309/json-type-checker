@@ -71,8 +71,8 @@ func ParseTypedefToNode(typedefFile []byte) (Node, error) {
 	return obj, err
 }
 
-func AssertionFailed(message string) {
-	fmt.Println("[TYPE-CHECKER]: " + message)
+func PrintMessage(message string) {
+	fmt.Println("[JTC]: " + message)
 }
 
 func ValidateJsonFile(valNode Node, jsonObj *fastjson.Value, jsonPath string) {
@@ -80,25 +80,25 @@ func ValidateJsonFile(valNode Node, jsonObj *fastjson.Value, jsonPath string) {
 	case "string":
 		_, err := jsonObj.StringBytes()
 		if err != nil {
-			AssertionFailed("Expected string at " + jsonPath)
+			PrintMessage("❌ Expected string at " + jsonPath)
 		}
 	case "number":
 		_, err := jsonObj.Int()
 		if err != nil {
-			AssertionFailed("Expected number at " + jsonPath)
+			PrintMessage("❌ Expected number at " + jsonPath)
 		}
 	case "object":
 		obj, err := jsonObj.Object()
 		if err != nil {
-			AssertionFailed("Expected object at " + jsonPath)
+			PrintMessage("❌ Expected object at " + jsonPath)
 		}
 		if obj.Len() != len(valNode.Properties) {
-			AssertionFailed("Object has too many fields at " + jsonPath)
+			PrintMessage("⚠️ Object has too many fields at " + jsonPath)
 		}
 		for propertyName, propertyValNode := range valNode.Properties {
 			propertyJsonObj := obj.Get(propertyName)
 			if propertyJsonObj == nil {
-				AssertionFailed(fmt.Sprintf("Object missing key '%v' at %v", propertyName, jsonPath))
+				PrintMessage(fmt.Sprintf("❌ Object missing key '%v' at %v", propertyName, jsonPath))
 			} else {
 
 				ValidateJsonFile(*propertyValNode, propertyJsonObj, jsonPath+"."+propertyName)
@@ -107,7 +107,7 @@ func ValidateJsonFile(valNode Node, jsonObj *fastjson.Value, jsonPath string) {
 	case "list":
 		arr, err := jsonObj.Array()
 		if err != nil {
-			AssertionFailed("Expected list")
+			PrintMessage("❌ Expected list at " + jsonPath)
 		}
 		for i, childJsonObj := range arr {
 			ValidateJsonFile(*valNode.Children, childJsonObj, jsonPath+"["+fmt.Sprint(i)+"]")
@@ -142,7 +142,9 @@ func main() {
 			v, err := fastjson.Parse(string(jsonFile))
 			FailOnError(err)
 
+			PrintMessage(fmt.Sprintf("📜 Validating %v", filePath))
 			ValidateJsonFile(obj, v, "")
+			PrintMessage(fmt.Sprintf("✅ Successfully validated %v\n", filePath))
 		})
 
 	})
