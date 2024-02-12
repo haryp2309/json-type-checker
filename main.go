@@ -113,6 +113,8 @@ func ValidateJsonFile(valNode Node, jsonObj *fastjson.Value, jsonPath string) {
 			ValidateJsonFile(*valNode.Children, childJsonObj, jsonPath+"["+fmt.Sprint(i)+"]")
 		}
 
+	default:
+		PrintMessage("❗ Unknown type specified at " + jsonPath)
 	}
 
 }
