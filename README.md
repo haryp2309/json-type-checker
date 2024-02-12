@@ -10,6 +10,16 @@ This project aims to solve IDE support for typed JSON files. By defining a `[nam
 
 The errors will be printed to console. If nothing is printed, no issues was found.
 
+Here is an example:
+```sh
+$ ./jtc --directory test_files/
+[JTC]: 📜 Validating test_files/test.json
+[JTC]: ❌ Object missing key 'command' at .jobs[0]
+[JTC]: ❌ Expected number at .jobs[0].run_id
+[JTC]: ❌ Object missing key 'run_id' at .jobs[1]
+[JTC]: ✅ Successfully validated test_files/test.json
+```
+
 ## Typedefinition
 
 Each field is named a "Node". The root node will contain child nodes. There are differeent types of nodes:
@@ -70,7 +80,7 @@ An object needs to specify what properties it has and how it's child nodes will 
 }
 ```
 
-### Example
+### Typedef Example
 ```json
 {
     "type": "object",
