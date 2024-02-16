@@ -1,16 +1,23 @@
 {
-    "jobs": [
-      {
-        "name": "Install something",
-        "commmand": "sudo dnf install something",
-        "tag": "tag123",
-        "run_id": "1"
+  "jobs": [
+    {
+      "name": "Install something",
+      "commmand": "sudo dnf install something",
+      "tag": "tag123",
+      "run_id": "1",
+      "person": {
+        "firstName": "Robert",
+        "friend": {
+          "firstName": "Hans"
+        }
       },
-      {
-        "name": "Install another thing",
-        "command": "sudo dnf install another thing",
-        "tag": "tagsss",
-        "run_i": 2
-      }
-    ]
-  }
+      "bo": 1
+    },
+    {
+      "name": "Install another thing",
+      "command": "sudo dnf install another thing",
+      "tag": "tagsss",
+      "run_id": 2
+    }
+  ]
+}

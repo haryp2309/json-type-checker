@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/golang-collections/collections/set"
 	"github.com/valyala/fastjson"
 )
 
@@ -63,6 +64,8 @@ type Node struct {
 	Type       string           `json:"type"`
 	Children   *Node            `json:"children,omitempty"`
 	Properties map[string]*Node `json:"properties,omitempty"`
+	Define     map[string]*Node `json:"define,omitempty"`
+	Optional   bool             `json:"optional,omitempty"`
 }
 
 func ParseTypedefToNode(typedefFile []byte) (Node, error) {
@@ -75,46 +78,88 @@ func PrintMessage(message string) {
 	fmt.Println("[JTC]: " + message)
 }
 
-func ValidateJsonFile(valNode Node, jsonObj *fastjson.Value, jsonPath string) {
+func MergeDefinitions(definition1 map[string]*Node, definition2 map[string]*Node) map[string]*Node {
+	if definition2 == nil {
+		return definition1
+	}
+	result := make(map[string]*Node)
+	for _, definition := range [2]map[string]*Node{definition1, definition2} {
+		for key, value := range definition {
+			result[key] = value
+		}
+	}
+	return result
+}
+
+func ValidateJsonFile(valNode Node, jsonObj *fastjson.Value, jsonPath string, definition map[string]*Node) {
+
+	mergedDefinition := MergeDefinitions(definition, valNode.Define)
+
 	switch valNode.Type {
 	case "string":
 		_, err := jsonObj.StringBytes()
 		if err != nil {
 			PrintMessage("❌ Expected string at " + jsonPath)
+			return
 		}
 	case "number":
 		_, err := jsonObj.Int()
 		if err != nil {
 			PrintMessage("❌ Expected number at " + jsonPath)
+			return
 		}
 	case "object":
 		obj, err := jsonObj.Object()
 		if err != nil {
 			PrintMessage("❌ Expected object at " + jsonPath)
+			return
 		}
-		if obj.Len() != len(valNode.Properties) {
-			PrintMessage("⚠️ Object has too many fields at " + jsonPath)
+		if obj.Len() > len(valNode.Properties) {
+			keys := set.New()
+
+			for key := range valNode.Properties {
+				keys.Insert(key)
+			}
+
+			obj.Visit(func(key []byte, v *fastjson.Value) {
+				foundKey := string(key)
+				if !keys.Has(foundKey) {
+					PrintMessage(fmt.Sprintf("⚠️ Object has unexpected field '%v' at %v", foundKey, jsonPath))
+				}
+			})
+
 		}
 		for propertyName, propertyValNode := range valNode.Properties {
 			propertyJsonObj := obj.Get(propertyName)
-			if propertyJsonObj == nil {
-				PrintMessage(fmt.Sprintf("❌ Object missing key '%v' at %v", propertyName, jsonPath))
-			} else {
 
-				ValidateJsonFile(*propertyValNode, propertyJsonObj, jsonPath+"."+propertyName)
+			if propertyJsonObj == nil {
+				if !propertyValNode.Optional {
+					PrintMessage(fmt.Sprintf("❌ Object missing key '%v' at %v", propertyName, jsonPath))
+				}
+				continue
 			}
+
+			ValidateJsonFile(*propertyValNode, propertyJsonObj, jsonPath+"."+propertyName, mergedDefinition)
 		}
 	case "list":
 		arr, err := jsonObj.Array()
 		if err != nil {
 			PrintMessage("❌ Expected list at " + jsonPath)
+			return
 		}
 		for i, childJsonObj := range arr {
-			ValidateJsonFile(*valNode.Children, childJsonObj, jsonPath+"["+fmt.Sprint(i)+"]")
+			ValidateJsonFile(*valNode.Children, childJsonObj, jsonPath+"["+fmt.Sprint(i)+"]", mergedDefinition)
 		}
 
 	default:
-		PrintMessage("❗ Unknown type specified at " + jsonPath)
+		nextValidationNode := mergedDefinition[valNode.Type]
+
+		if nextValidationNode == nil {
+			PrintMessage("❗ Unknown type specified at " + jsonPath)
+			return
+		}
+
+		ValidateJsonFile(*nextValidationNode, jsonObj, jsonPath, mergedDefinition)
 	}
 
 }
@@ -145,7 +190,7 @@ func main() {
 			FailOnError(err)
 
 			PrintMessage(fmt.Sprintf("📜 Validating %v", filePath))
-			ValidateJsonFile(obj, v, "")
+			ValidateJsonFile(obj, v, "", make(map[string]*Node))
 			PrintMessage(fmt.Sprintf("✅ Successfully validated %v\n", filePath))
 		})
 

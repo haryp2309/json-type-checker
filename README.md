@@ -80,6 +80,31 @@ An object needs to specify what properties it has and how it's child nodes will 
 }
 ```
 
+### Custom types
+
+Custom types can be defined in the "definition"-field as seen in this example. The definition will be available for the current node and all child nodes.
+
+```json
+{
+  "type": "...",
+  // ...
+  "define": {
+    "person": {
+      "type": "object",
+      "properties": {
+        "firstName": {
+          "type": "string"
+        },
+        "friend": {
+          "type": "person",
+          "optional": true
+        }
+      }
+    }
+  }
+}
+```
+
 ### Typedef Example
 ```json
 {
