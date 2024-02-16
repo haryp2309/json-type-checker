@@ -33,7 +33,8 @@
           "type": "string"
         },
         "friend": {
-          "type": "person"
+          "type": "person",
+          "optional": true
         }
       }
     }

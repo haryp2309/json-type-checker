@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/golang-collections/collections/set"
 	"github.com/valyala/fastjson"
 )
 
@@ -64,6 +65,7 @@ type Node struct {
 	Children   *Node            `json:"children,omitempty"`
 	Properties map[string]*Node `json:"properties,omitempty"`
 	Define     map[string]*Node `json:"define,omitempty"`
+	Optional   bool             `json:"optional,omitempty"`
 }
 
 func ParseTypedefToNode(typedefFile []byte) (Node, error) {
@@ -113,19 +115,31 @@ func ValidateJsonFile(valNode Node, jsonObj *fastjson.Value, jsonPath string, de
 			return
 		}
 		if obj.Len() > len(valNode.Properties) {
-			PrintMessage("⚠️ Object has too many fields at " + jsonPath)
-		}
-		if obj.Len() < len(valNode.Properties) {
-			PrintMessage("⚠️ Object is missing fields at " + jsonPath)
+			keys := set.New()
+
+			for key := range valNode.Properties {
+				keys.Insert(key)
+			}
+
+			obj.Visit(func(key []byte, v *fastjson.Value) {
+				foundKey := string(key)
+				if !keys.Has(foundKey) {
+					PrintMessage(fmt.Sprintf("⚠️ Object has unexpected field '%v' at %v", foundKey, jsonPath))
+				}
+			})
+
 		}
 		for propertyName, propertyValNode := range valNode.Properties {
 			propertyJsonObj := obj.Get(propertyName)
-			if propertyJsonObj == nil {
-				PrintMessage(fmt.Sprintf("❌ Object missing key '%v' at %v", propertyName, jsonPath))
-			} else {
 
-				ValidateJsonFile(*propertyValNode, propertyJsonObj, jsonPath+"."+propertyName, mergedDefinition)
+			if propertyJsonObj == nil {
+				if !propertyValNode.Optional {
+					PrintMessage(fmt.Sprintf("❌ Object missing key '%v' at %v", propertyName, jsonPath))
+				}
+				continue
 			}
+
+			ValidateJsonFile(*propertyValNode, propertyJsonObj, jsonPath+"."+propertyName, mergedDefinition)
 		}
 	case "list":
 		arr, err := jsonObj.Array()

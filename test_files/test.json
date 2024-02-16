@@ -6,15 +6,18 @@
       "tag": "tag123",
       "run_id": "1",
       "person": {
-        "friend": {}
-      }
+        "firstName": "Robert",
+        "friend": {
+          "firstName": "Hans"
+        }
+      },
+      "bo": 1
     },
     {
       "name": "Install another thing",
       "command": "sudo dnf install another thing",
       "tag": "tagsss",
-      "run_i": 2
-    },
-    ""
+      "run_id": 2
+    }
   ]
 }
